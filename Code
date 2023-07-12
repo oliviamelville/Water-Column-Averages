@@ -1,0 +1,135 @@
+import pandas as pd
+import xarray as xr
+import numpy as np
+#import rioxarray as rxr
+import os
+
+#This code returns the average temperature, salinity, and oxygen in the 
+#mixed layer, thermocline and bottom water as well as where these depths occur
+
+#change working directory
+os.chdir('C:/Users/User/Desktop/University of Victoria/Masters Varela 2021/Radiolarians/Data/Cruise Raw Data/Line P 2023 May/Environment/DeepCast')
+# Get the current working directory
+cwd = os.getcwd()
+
+#name directory
+directory = 'C:/Users/User/Desktop/University of Victoria/Masters Varela 2021/Radiolarians/Data/Cruise Raw Data/Line P 2023 May/Environment/DeepCast'
+# giving file extension
+ext = ('.xlsx')
+ 
+#Looping the function, extracting the correct variables
+for files in os.listdir(directory):
+    if files.endswith(ext):
+        data = pd.read_excel(files)
+        #maindata = pd.DataFrame(columns = ['Depth', 'Temperature','Salinity','Oxygen','Oxygen per kg'])
+
+        data_df250 = pd.DataFrame()
+        data_df250["Depth"]=data['Pressure:CTD [dbar]'].values[:]
+        data_df250["Temperature"]=data['sea_water_temperature'].values[:] #Pulling only1200 and above
+        data_df250["Salinity"]=data['sea_water_practical_salinity'].values[:]
+        data_df250["Oxygen"]=data['DOXYZZ01'].values[:]
+       # data_df250["Oxygen per kg"] = data['DOXMZZ01'].values[:]
+        #data_df250["N"] = data['NTRZAAZ1'].values[:]
+        #data_df250["P"] = data["PHOSAAZ1"].values[:]
+        #data_df250["Si"] = data["SLCAAAZ1"].values[:]
+        
+        
+######    
+        #Surface Water
+        surface10 = data_df250[(data_df250['Depth'] >=0) & (data_df250['Depth'] <= 10)] #Selecting top 10m (different each file)
+        surface_df = pd.DataFrame(surface10)
+        surface_mean = surface_df.describe().loc[['mean']]
+        surface = pd.DataFrame(surface_mean)              
+        
+            
+        #Mixed Layer Depth
+        #Prints the position where temperature is less than average temp - 0.2
+        MLD = data_df250['Temperature'] < (surface['Temperature'] - 0.2).iloc[0]
+        MLD = np.where(MLD)[0]  #The 0 means to print all true values
+        #print(MLD) #Will print index where True
+        MLD = data_df250.loc[MLD]
+        MLDepth = MLD.iloc[0]
+        MLDepth = pd.DataFrame(MLDepth)
+        MLDepth = MLDepth.transpose()
+        
+        #####
+        #Water above the surface water
+        
+        ML = data_df250[(data_df250['Depth'] < MLDepth['Depth'].iloc[0])]
+        ML_df = pd.DataFrame(ML)
+        ML_mean = ML_df.describe().loc[['mean']]
+        ML = pd.DataFrame(ML_mean)
+
+        
+#####
+        #Water below the surface water
+        
+        belowmixedlayer = data_df250[(data_df250['Depth'] > MLDepth['Depth'].iloc[0])]
+        below_df = pd.DataFrame(belowmixedlayer)
+        below_mean = below_df.describe().loc[['mean']]
+        below = pd.DataFrame(below_mean)
+        
+######
+        
+        #Bottom Water
+        bottom = data_df250[(data_df250['Depth'] >=160) & (data_df250['Depth'] <= 1200)] #Selecting top 10m (different each file)
+        bottom_df = pd.DataFrame(bottom)
+        bottom_mean = bottom_df.describe().loc[['mean']]
+        bottom = pd.DataFrame(bottom_mean)              
+        
+        
+        #Deep Water Layer
+        #Prints the position where temperature is no longer deep water
+        DWL = data_df250['Temperature'] > (bottom['Temperature'] + 0.2).iloc[0]
+        DWL = np.where(DWL)[0]  #The 0 means to print all true values where the temperature is greater than bottom average +0.2
+        #print(DWL) #Will print index where True
+        DWL = data_df250.loc[DWL]
+        DWLayer = DWL.iloc[-1] #Last item on list, therefore choosing the most deep thermocline layer
+        DWLayer = pd.DataFrame(DWLayer)
+        DWLayer = DWLayer.transpose()
+        
+        ######
+        
+        #250 to the base of the mixed layer
+        bongo = data_df250[(data_df250['Depth'] <=250) & (data_df250['Depth']> MLDepth['Depth'].iloc[0])]
+        bongo_df = pd.DataFrame(bongo)
+        bongo_mean = bongo_df.describe().loc[['mean']]
+        bongo = pd.DataFrame(bongo_mean)   
+        
+        
+######
+        
+        #Thermocline
+        thermocline = data_df250[(data_df250['Depth'] > MLDepth['Depth'].iloc[0]) & (data_df250['Depth'] < DWLayer['Depth'].iloc[0])]
+        thermocline_df = pd.DataFrame(thermocline)
+        thermocline_mean = thermocline_df.describe().loc[['mean']]
+        thermocline = pd.DataFrame(thermocline_mean)
+        
+        #print(surface)  #This prints averages from top 10
+        #print(ML)  #this prints average from mixed layer
+        #print(thermocline)   #Prints the average from thrmocline
+        #print(bottom)  #This brings the average from the bottom water
+        print(MLDepth)   #prints mixed layer depth
+        #print(DWLayer)  # prints where deep starts
+        #print(below) #prints the average below the thermocline
+        #print(bongo)
+
+#Working with NTC files
+#change working directory
+os.chdir('C:/Users/olivi/Desktop/University of Victoria/Masters Varela 2021/Radiolarians/Data/Chapter 1 Biogeography 12 years/Environment/Line P 2010-2022 Physical Properties/P4')
+# Get the current working directory
+cwd = os.getcwd()
+
+#name directory
+directory = 'C:/Users/olivi/Desktop/University of Victoria/Masters Varela 2021/Radiolarians/Data/Chapter 1 Biogeography 12 years/Environment/Line P 2010-2022 Physical Properties/P4'
+# giving file extension
+ext = ('.nc')
+ 
+#Making dataframe from nc file
+
+#Looping the function, extracting the correct variables
+for files in os.listdir(directory):
+    if files.endswith(ext):
+        data = xr.open_dataset(files)
+        #print(data)
+        #maindata = pd.DataFrame(columns = ['Depth', 'Temperature','Salinity','Oxygen','Oxygen per kg'])
